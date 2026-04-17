@@ -3,10 +3,7 @@
 set -e
 
 # ---- CONFIGURATION ----
-DOCKERHUB_USERNAME="30727"
-IMAGE_NAME="ecommerce-app"
-IMAGE_TAG="latest"
-FULL_IMAGE="$DOCKERHUB_USERNAME/$IMAGE_NAME:$IMAGE_TAG"
+FULL_IMAGE=${FULL_IMAGE:-"ecommerce-app:latest"}
 
 CONTAINER_NAME="ecommerce-container"
 HOST_PORT=80
@@ -22,7 +19,7 @@ echo "============================================"
 
 # ---- STEP 1: Pull latest image ----
 echo "📥 Pulling latest image..."
-docker pull $FULL_IMAGE
+docker pull $FULL_IMAGE || true
 
 # ---- STEP 2: Stop container if running ----
 echo "🛑 Stopping old container..."
@@ -32,11 +29,11 @@ docker stop $CONTAINER_NAME 2>/dev/null || true
 echo "🗑️ Removing old container..."
 docker rm $CONTAINER_NAME 2>/dev/null || true
 
-# ---- STEP 4: Free port if needed ----
+# ---- STEP 4: Check port ----
 echo "🔓 Checking port $HOST_PORT..."
-if sudo lsof -i :$HOST_PORT > /dev/null; then
-    echo "⚠️ Port $HOST_PORT is in use. Stopping processes..."
-    docker stop $(docker ps -q) 2>/dev/null || true
+if lsof -i :$HOST_PORT > /dev/null; then
+    echo "⚠️ Port $HOST_PORT is already in use"
+    exit 1
 fi
 
 # ---- STEP 5: Run container ----
@@ -53,7 +50,7 @@ sleep 3
 
 if docker ps | grep -q $CONTAINER_NAME; then
     echo "✅ Deployment successful!"
-    echo "🌐 App running at: http://$(curl -s ifconfig.me)"
+    echo "🌐 App running at: http://$(hostname -I | awk '{print $1}')"
 else
     echo "❌ Deployment failed!"
     docker logs $CONTAINER_NAME
