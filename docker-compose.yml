@@ -1,0 +1,26 @@
+version: "3.8"
+
+services:
+  ecommerce-app:
+    # Use the image built from Dockerfile
+    image: ecommerce-app:latest
+    container_name: ecommerce-container
+
+    # Map host port 80 to container port 80
+    ports:
+      - "80:80"
+
+    # Always restart if container crashes
+    restart: always
+
+    # Health check - verify app is running
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  default:
+    name: ecommerce-network
